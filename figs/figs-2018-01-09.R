@@ -1,4 +1,4 @@
-## Figures for presentations
+## Figures for R56 call
 ##
 ## by Artem Sokolov
 
