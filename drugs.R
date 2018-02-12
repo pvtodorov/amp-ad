@@ -76,3 +76,32 @@ main <- function()
     
     write_tsv( X, "Top20-by-region.tsv" )
 }
+
+## Extracts a gene set associated with dsRNA
+geneset.dsRNA <- function()
+{
+    ## Retrieve the raw data
+    X <- syn( "syn11807753" ) %>% readq_csv %>%
+        select( Gene=`Gene Symbol`, Control1=`Control Replicate 1`, Control2=`Control Replicate 2`,
+               dsRNAmi1 = `DsRNAmi Replicate 1`, dsRNAmi2 = `DsRNAmi Replicate 2` ) %>%
+        rowwise %>% mutate( Control = mean( c(Control1, Control2), na.rm=TRUE ),
+                           dsRNAmi = mean( c(dsRNAmi1, dsRNAmi2), na.rm=TRUE ) ) %>% ungroup %>%
+        mutate( FoldChange = dsRNAmi / Control )
+
+    ## Corner case: protein not expressed in control leading infinite fold change
+    v1 <- X %>% filter( Control == 0, dsRNAmi > 10 ) %>% magrittr::extract2( "Gene" )
+
+    ## Consider remaining data
+    v2 <- X %>% filter( Control != 0 ) %>% select( Gene, FoldChange ) %>%
+        mutate( lFC = abs(log2( FoldChange )) ) %>% arrange( desc(lFC) ) %>% filter( lFC > 1 ) %>%
+        magrittr::extract2( "Gene" )
+
+    ## Combine the two lists and retrieve unique entries
+    ## Write the result to a file and store the file to Synapse
+    v <- c( v1, v2 ) %>% unique %>% cat( file = "dsRNA.txt", sep="\n" )
+    f <- File( "dsRNA.txt", parentId = "syn11629934" )
+    annotations(f)$Type <- "Gene Set"
+    annotations(f)$Category <- "Interferome"
+    annotations(f)$Reference <- "LSP Experiment"
+    synStore(f)
+}
