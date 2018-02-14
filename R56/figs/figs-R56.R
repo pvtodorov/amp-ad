@@ -67,71 +67,53 @@ fig2b <- function()
               plot.margin = unit( c(5.5,5.5,5.5,30), "pt" ) )
 }
 
+fig2c <- function()
+{
+    ## Load dsRNA and Metformin results
+    load( "res-SPN-EvI.RData" )
+    load( "res-dsRNA-EvI.RData" )
+
+    ## Compute summary statistics across the different metaparameter values
+    vSPN <- sapply( rSPN, max )
+    vdsRNA <- sapply( rdsRNA, max )
+
+    ## Put together foreground and background data frames
+    FG <- data_frame( AUC = c( vSPN[1], vdsRNA[1] ),
+                     GeneSet = c( "Metformin", "IFN-I" ),
+                     SetSize = str_c( "#Genes: ", c(472, 292) ),
+                     pLbl = c( "p<0.01", "p=0.03" ) ) %>%
+        mutate( Lbl = str_c( SetSize, "\n  ", pLbl ) )
+    BK <- bind_rows( data_frame( Value = vSPN[-1], Bk = str_c( "Background", 1:(length(vSPN)-1) ),
+                                GeneSet = "Metformin" ),
+                    data_frame( Value = vdsRNA[-1], Bk = str_c( "Background", 1:(length(vdsRNA)-1) ),
+                               GeneSet = "IFN-I" ) )
+                                
+    ## Plot everything
+    ggplot( BK, aes(x=Value) ) + theme_bw() +
+        geom_density( size = 1, fill = "steelblue", alpha = 0.2 ) + ylab( "Density" ) +
+        xlab( "AUC" ) + xlim( c(0.44, 0.66) ) + ylim( 0, 14 ) +
+        facet_wrap( ~GeneSet, ncol=1 ) +
+        theme( strip.background = element_blank(), strip.text = element_blank(),
+              axis.text.x = element_text( face="bold", size=12),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              axis.title = element_text( face="bold", size=14 ),
+              plot.margin = unit( c(5.5,5.5,5.5,30), "pt" ) ) +
+        geom_vline( data = FG, aes(xintercept = AUC), color = "red", size=1 ) +
+        geom_text( data = FG, aes(x=AUC, label=GeneSet), y=Inf, color="red",
+                  hjust = 1.1, vjust = 1.5, fontface="bold" ) +
+        geom_text( data = FG, aes(label=Lbl), x=-Inf, y=Inf, hjust=-0.1, vjust=1.25,
+                  fontface="bold" )
+}
+
 fig2 <- function()
 {
     gga <- fig2a()
     ggb <- fig2b()
+    ggc <- fig2c()
 
-    gg <- arrangeGrob( gga, ggb, widths = c(2,2), nrow=1 )
-    grid.draw(gg)
-    ggsave( "fig2.png", gg, width = 8, height = 3 )
+    gg <- arrangeGrob( gga, ggb, ggc, widths = c(2,2,1.75), nrow=1 )
+##    grid.draw(gg)
+    ggsave( "fig2.png", gg, width = 11, height = 3 )
 }
 
-## Retrieves background distribution for gene sets of requested size
-getBK <- function( B, n )
-{
-    ## Identify the closest column
-    j <- as.character( round( n / 10 ) * 10 )
-    B[[j]]
-}
-
-## Generates a figure for a given AUC / Background / gene set size
-make.fig <- function( AUC, B, n, lbl, xlbl = "AUC" )
-{
-    ## Retrieve the background
-    v <- getBK( B, n )
-    RR <- data_frame( Bk = v )
-    pval <- sum( AUC < v ) / length(v)
-    txt <- paste0( "p-value=", round(pval,3) )
-
-    ## Plot everything
-    ggplot( RR, aes(x=Bk) ) + theme_bw() +
-        geom_density( size = 1, fill = "steelblue", alpha = 0.2 ) + ylab( "Density" ) +
-        xlab( xlbl ) +
-        geom_vline( xintercept = AUC, color = "red", size=1 ) +
-        theme( axis.text = element_text( face="bold", size = 12 ),
-              axis.title = element_text( face="bold", size = 12 ) ) +
-        geom_text( data = RR[1,], label = txt, x = -Inf, y=Inf, size = 6,
-                  vjust = 1.2, hjust = -0.2, fontface="bold" ) +
-        ggtitle( lbl )
-}
-
-## Plots for Metformin performance
-metformin <- function( fg, bg )
-{
-    ## Name of set -> n_genes -> intersect
-    ## SPNetwork -> 477 -> 404
-    ## upstream -> 65 -> 54
-    ## downstream -> 66 -> 60
-
-    ## Load the foreground and background values
-    BB <- syn( bg ) %>% readq_csv
-    FF <- syn( fg ) %>% readq_csv
-
-    ## Compose individual figures
-    gg1 <- make.fig( FF$`Metformin-upstream.txt`, BB, 54, "Upstream", "" )
-    gg2 <- make.fig( FF$`Metformin-SPNetwork.txt`, BB, 404, "SPNetwork" )
-    gg3 <- make.fig( FF$`Metformin-downstream.txt`, BB, 60, "Downstream", "" )
-    arrangeGrob( gg1, gg2, gg3, nrow=1 )
-}
-
-main <- function()
-{
-    ## BM22, multi-class non-linear
-    BM22.nln <- metformin( "syn11727046", "syn11727045" )
-    ggsave( "metformin-rf.png", BM22.nln, width=12, height=4 )
-
-    ## BM22, ordinal
-    BM22.ord <- metformin( "syn11726984", "syn11726985" )
-    ggsave( "metformin.png", BM22.ord, width=12, height=4 )
-}
