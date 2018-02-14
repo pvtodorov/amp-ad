@@ -174,15 +174,15 @@ main.ROSMAP <- function()
     rSPN <- evalGeneSet( X.EvI, vSPN, 100 )
     rdsRNA <- evalGeneSet( X.EvI, vdsRNA, 100 )
 
-    save( rSPN, file="one-off/res-SPN-EvI.RData" )
-    save( rdsRNA, file="one-off/res-dsRNA-EvI.RData" )    
+    save( rSPN, file="figs/res-SPN-EvI.RData" )
+    save( rdsRNA, file="figs/res-dsRNA-EvI.RData" )    
 
     ## In-depth early-vs-late experiments
     rSPN <- evalGeneSet( X.EvL, vSPN, 100 )
     rdsRNA <- evalGeneSet( X.EvL, vdsRNA, 100 )
 
-    save( rSPN, file="one-off/res-SPN-EvL.RData" )
-    save( rdsRNA, file="one-off/res-dsRNA-EvL.RData" )
+    save( rSPN, file="figs/res-SPN-EvL.RData" )
+    save( rdsRNA, file="figs/res-dsRNA-EvL.RData" )
 
     ## Dataset slice for prototyping / variance assessment
     X1 <- X.EvL %>% select( Stage, one_of( intersect(vSPN, colnames(.)) ) )

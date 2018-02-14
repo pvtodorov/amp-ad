@@ -74,7 +74,7 @@ main <- function()
         mutate( Target = ifelse( LINCS_ID == "HMSL10209", "IGF1R", Target ) ) %>%
         mutate( Target = ifelse( LINCS_ID %in% c( "HMSL10470", "HMSL10475" ), "DAGK", Target ) )
     
-    write_tsv( X, "Top20-by-region.tsv" )
+    write_tsv( X, "figs/Top20-by-region.tsv" )
 }
 
 ## Extracts a gene set associated with dsRNA
