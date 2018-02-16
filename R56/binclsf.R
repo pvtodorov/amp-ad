@@ -161,8 +161,10 @@ main.ROSMAP <- function()
     ## Split up the data into early-vs-intermediate and early-vs-late tasks
     cEvI <- c( "early", "intermediate" )
     cEvL <- c( "early", "late" )
+    cIvL <- c( "intermediate", "late" )
     X.EvI <- XX %>% filter( Stage %in% cEvI ) %>% mutate( Stage = factor( Stage, cEvI ) )
     X.EvL <- XX %>% filter( Stage %in% cEvL ) %>% mutate( Stage = factor( Stage, cEvL ) )
+    X.IvL <- XX %>% filter( Stage %in% cIvL ) %>% mutate( Stage = factor( Stage, cIvL ) )
 
     res1 <- evalSets( X.EvI )
     res2 <- evalSets( X.EvL )
@@ -183,6 +185,9 @@ main.ROSMAP <- function()
 
     save( rSPN, file="figs/res-SPN-EvL.RData" )
     save( rdsRNA, file="figs/res-dsRNA-EvL.RData" )
+
+    ## In-depth intermediate-vs-late experiments
+    rSPN <- evalGeneSet( X.IvL, vSPN, 100 )
 
     ## Dataset slice for prototyping / variance assessment
     X1 <- X.EvL %>% select( Stage, one_of( intersect(vSPN, colnames(.)) ) )
